@@ -43,8 +43,9 @@ export interface Tab {
 	group?: string;
 	/**
 	 * Health-check target. One of:
-	 *   - omitted          : no health check for this tab
+	 *   - omitted          : inherit from top-level `pingAll` (defaults to off)
 	 *   - `true`           : ping the tab's main `url`
+	 *   - `false`          : explicit opt-out (beats `pingAll: true`)
 	 *   - a URL string     : ping that URL instead of `url` (useful when your
 	 *                        public iframe URL is behind auth but you want to
 	 *                        probe an internal `http://host:port` directly)
@@ -66,7 +67,38 @@ export interface AppConfig {
 	 * ones. Ungrouped tabs always come first regardless.
 	 */
 	groupOrder?: string[];
+	/**
+	 * Global ping default. When `true`, every tab gets a health check against
+	 * its `url` unless the tab sets `"ping": false`. When omitted or `false`,
+	 * only tabs with an explicit `ping` setting are checked.
+	 *
+	 * Per-tab `ping` always wins over `pingAll`.
+	 */
+	pingAll?: boolean;
 	tabs: Tab[];
+}
+
+/**
+ * Resolve a tab's effective ping target.
+ *
+ *   tab.ping is a URL string        -> probe that URL
+ *   tab.ping === true               -> probe tab.url
+ *   tab.ping === false              -> no probe (explicit opt-out, beats pingAll)
+ *   tab.ping undefined, pingAll=true -> probe tab.url
+ *   otherwise                       -> no probe
+ *
+ * Returns the URL to probe, or `undefined` if health checks are disabled for
+ * this tab.
+ */
+export function resolveTabPing(
+	tab: Tab,
+	pingAll: boolean | undefined,
+): string | undefined {
+	if (tab.ping === false) return undefined;
+	if (typeof tab.ping === "string") return tab.ping;
+	if (tab.ping === true) return tab.url;
+	if (pingAll) return tab.url;
+	return undefined;
 }
 
 const CONFIG_PATH =
@@ -195,10 +227,18 @@ function validate(raw: unknown): AppConfig {
 			return g;
 		});
 	}
+	let pingAll: boolean | undefined;
+	if (c.pingAll !== undefined) {
+		if (typeof c.pingAll !== "boolean") {
+			throw new Error("config.json: pingAll must be a boolean when present");
+		}
+		pingAll = c.pingAll;
+	}
 	return {
 		title: typeof c.title === "string" && c.title ? c.title : "hello",
 		defaultTab,
 		groupOrder,
+		pingAll,
 		tabs,
 	};
 }

@@ -175,45 +175,45 @@ body {
 	border: 0;
 }
 
-/* Loaded indicator dot — appears for tabs whose iframe has been built
-   (either preloaded or previously visited). Organizr has a similar cue. */
+/* Loaded indicator dot — top-right corner. Means the iframe has been
+   built (either preloaded or previously visited). */
 .tab-button[data-loaded="1"]::after {
 	content: "";
 	position: absolute;
-	right: 6px;
-	top: 6px;
+	right: 5px;
+	top: 5px;
 	width: 5px;
 	height: 5px;
 	border-radius: 50%;
-	background: var(--ctp-green);
-	opacity: 0.75;
+	background: var(--ctp-blue);
+	opacity: 0.85;
+	box-shadow: 0 0 0 1.5px var(--bg-elev);
 }
 
-/* Health indicator dot — bottom-right corner of the tab button.
-   Drawn on the button itself with a second pseudo-element, overriding the
-   ::after loaded dot only when a health state is known. */
-.tab-button[data-health]::after {
-	content: "";
+/* Health indicator dot — bottom-right corner. Rendered as a real element
+   (not ::after) so it doesn't conflict with the loaded dot. */
+.tab-button .health-dot {
 	position: absolute;
-	right: 6px;
-	bottom: 6px;
-	top: auto;
+	right: 5px;
+	bottom: 5px;
 	width: 6px;
 	height: 6px;
 	border-radius: 50%;
-	opacity: 1;
+	background: var(--ctp-overlay0);
+	box-shadow: 0 0 0 1.5px var(--bg-elev);
+	pointer-events: none;
 }
-.tab-button[data-health="checking"]::after {
+.tab-button[data-health="checking"] .health-dot {
 	background: var(--ctp-overlay0);
 }
-.tab-button[data-health="unknown"]::after {
+.tab-button[data-health="unknown"] .health-dot {
 	background: var(--ctp-overlay0);
 	opacity: 0.5;
 }
-.tab-button[data-health="up"]::after {
+.tab-button[data-health="up"] .health-dot {
 	background: var(--ctp-green);
 }
-.tab-button[data-health="down"]::after {
+.tab-button[data-health="down"] .health-dot {
 	background: var(--ctp-red);
 	animation: health-pulse 1.6s ease-in-out infinite;
 }
@@ -228,6 +228,77 @@ body {
 		opacity: 0.5;
 		transform: scale(1.3);
 	}
+}
+
+/* Rich tooltip — custom popover shown on hover/focus of a tab button.
+   Contains the tab name, group, current health state, last latency, and
+   last HTTP status. Positioned to the right of the sidebar so it doesn't
+   clip behind the iframe. */
+.tab-tooltip {
+	position: absolute;
+	left: calc(var(--sidebar-width) + 6px);
+	z-index: 15;
+	min-width: 160px;
+	max-width: 280px;
+	padding: 8px 10px;
+	border: 1px solid var(--divider);
+	border-radius: 8px;
+	background: var(--bg-elev);
+	color: var(--fg);
+	font-size: 12px;
+	line-height: 1.35;
+	box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+	pointer-events: none;
+	opacity: 0;
+	transform: translateY(-2px);
+	transition:
+		opacity 80ms ease,
+		transform 80ms ease;
+}
+
+.tab-tooltip[data-visible="1"] {
+	opacity: 1;
+	transform: translateY(0);
+}
+
+.tab-tooltip-name {
+	font-weight: 600;
+	color: var(--fg);
+	margin-bottom: 2px;
+}
+
+.tab-tooltip-group {
+	color: var(--fg-muted);
+	font-size: 11px;
+	margin-bottom: 6px;
+}
+
+.tab-tooltip-row {
+	display: flex;
+	justify-content: space-between;
+	gap: 8px;
+	color: var(--fg-muted);
+	font-size: 11px;
+}
+
+.tab-tooltip-row + .tab-tooltip-row {
+	margin-top: 2px;
+}
+
+.tab-tooltip-row strong {
+	font-weight: 500;
+	color: var(--fg);
+}
+
+.tab-tooltip-row[data-kind="up"] strong {
+	color: var(--ctp-green);
+}
+.tab-tooltip-row[data-kind="down"] strong {
+	color: var(--ctp-red);
+}
+.tab-tooltip-row[data-kind="checking"] strong,
+.tab-tooltip-row[data-kind="unknown"] strong {
+	color: var(--fg-muted);
 }
 
 /* Stage --------------------------------------------------------------- */

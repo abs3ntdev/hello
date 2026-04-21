@@ -85,7 +85,8 @@ function switchTab(tabs: Map<string, TabMeta>, id: string): void {
 	meta.button.setAttribute("aria-selected", "true");
 	currentId = meta.id;
 
-	document.title = `${meta.button.title} · ${document.documentElement.dataset.brand ?? "hello"}`;
+	const name = meta.button.dataset.name ?? meta.button.title;
+	document.title = `${name} · ${document.documentElement.dataset.brand ?? "hello"}`;
 	const hash = `#${encodeURIComponent(id)}`;
 	if (location.hash !== hash) {
 		history.replaceState(null, "", hash);

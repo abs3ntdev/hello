@@ -42,6 +42,12 @@ export const configSchema = {
 			description:
 				"Explicit ordering for groups in the sidebar. Groups listed here render in this order after any ungrouped tabs; groups not listed fall back to first-occurrence order after the listed ones.",
 		},
+		pingAll: {
+			type: "boolean",
+			default: false,
+			description:
+				"Enable health checks for every tab by default. Individual tabs can still opt out with `\"ping\": false`. When omitted or `false`, only tabs with an explicit `ping` setting are checked.",
+		},
 		tabs: {
 			type: "array",
 			minItems: 1,
@@ -104,7 +110,7 @@ export const configSchema = {
 				},
 				ping: {
 					description:
-						"Health check for this tab. `true` pings the main `url`. A URL string pings that URL instead (useful when the public URL is behind auth or you want to probe a LAN `http://host:port` directly). Omit / `false` to disable.",
+						"Health check for this tab. `true` pings the main `url`; a URL string pings that URL instead; `false` explicitly disables checking even when `pingAll` is `true` at the top level. Omit to inherit from `pingAll`.",
 					oneOf: [
 						{ type: "boolean" },
 						{ type: "string", format: "uri" },

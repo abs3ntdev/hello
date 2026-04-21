@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { loadConfig } from "../../lib/config";
+import { loadConfig, resolveTabPing } from "../../lib/config";
 import { ping } from "../../lib/ping";
 
 /**
@@ -25,11 +25,10 @@ export const GET: APIRoute = async ({ url }) => {
 	if (!tab) {
 		return Response.json({ error: "unknown tab" }, { status: 404 });
 	}
-	if (!tab.ping) {
+	const target = resolveTabPing(tab, config.pingAll);
+	if (!target) {
 		return Response.json({ error: "ping not enabled" }, { status: 400 });
 	}
-
-	const target = typeof tab.ping === "string" ? tab.ping : tab.url;
 	const result = await ping(target);
 
 	return Response.json(

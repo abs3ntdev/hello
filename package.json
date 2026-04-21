@@ -7,9 +7,10 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "npm run schema && astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "schema": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/dump-schema.mjs"
   },
   "dependencies": {
     "@astrojs/node": "^10.0.5",

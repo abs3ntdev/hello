@@ -25,6 +25,7 @@ image.
 - **Installable PWA** — your browser's install prompt will offer a standalone
   window and app icon.
 - **Catppuccin Mocha** theme out of the box.
+- **JSON Schema** for `config.json` — editor autocomplete and validation.
 - [selfh.st/icons](https://selfh.st/icons) integration with a `sh-` prefix that
   mirrors homepage/dashy, plus an explicit `selfhst:` form with light/dark
   variant support.
@@ -110,6 +111,38 @@ label first appears in the config, with a thin divider between groups.
 
 Invalid config throws on page load — the error shows the bad field. Missing
 config falls back to a one-tab example so the container doesn't hard-fail.
+
+### Editor autocomplete (JSON Schema)
+
+A JSON Schema is bundled with the repo and also served by the app. Add a
+`$schema` line to the top of your `config.json` and most editors (VS Code,
+Zed, JetBrains, neovim with SchemaStore) will give you tab completion,
+inline docs, and red squiggles on typos.
+
+**Option A — pin to the repo (recommended, doesn't require the app to be up):**
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/abs3ntdev/hello/main/schema/config.schema.json",
+  "title": "hello",
+  "tabs": [ ... ]
+}
+```
+
+**Option B — pin to your running deployment:**
+```json
+{
+  "$schema": "https://hello.asdf.cafe/schema/config.json",
+  "title": "hello",
+  ...
+}
+```
+
+Or reference the local file inside the repo checkout:
+```json
+{
+  "$schema": "./schema/config.schema.json"
+}
+```
 
 ## Icons
 

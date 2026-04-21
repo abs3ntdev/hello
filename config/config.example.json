@@ -1,4 +1,6 @@
 {
+	"$schema": "https://raw.githubusercontent.com/abs3ntdev/hello/main/schema/config.schema.json",
+
 	"title": "hello",
 	"defaultTab": "sonarr",
 	"tabs": [

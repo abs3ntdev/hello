@@ -105,12 +105,27 @@ function probeOnce(url: string, method: "HEAD" | "GET"): Promise<PingResult> {
 }
 
 /**
- * Probe a URL. Tries HEAD first; retries once with GET if HEAD fails,
- * because some upstreams refuse HEAD entirely (returning 405 counts as up,
- * so we only retry on a transport-level failure).
+ * Probe a URL. Tries HEAD first; retries with GET when HEAD doesn't give
+ * a clean 2xx. Specifically we retry on:
+ *   - transport-level failure (timeout, refused, DNS)
+ *   - any HTTP status outside 200–299
+ *
+ * Rationale: a 2xx from HEAD is a definitive "up". Anything else is worth
+ * a second look with GET before we decide — some upstreams reject HEAD
+ * with 405, 403, or 501 but cheerfully answer GET, and 3xx redirects often
+ * hide auth walls or stale URLs we'd rather see resolved.
+ *
+ * The GET result is authoritative even if its status is non-2xx; we only
+ * mark "down" on transport-level failures. An auth wall returning 401/403
+ * still means the service is serving, and that's all a health check cares
+ * about.
  */
+function isHealthy(code: number | undefined): boolean {
+	return typeof code === "number" && code >= 200 && code < 300;
+}
+
 export async function ping(url: string): Promise<PingResult> {
 	const head = await probeOnce(url, "HEAD");
-	if (head.ok) return head;
+	if (head.ok && isHealthy(head.status)) return head;
 	return probeOnce(url, "GET");
 }

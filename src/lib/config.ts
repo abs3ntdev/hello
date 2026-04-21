@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import { resolveIcon } from "./icons";
 
@@ -36,11 +36,23 @@ export interface Tab {
 	allow?: string;
 	/**
 	 * Optional group label. Tabs sharing a group render together in the
-	 * sidebar with a thin divider between groups. Groups appear in the order
-	 * they're first seen in the config. Ungrouped tabs appear before the
-	 * first group.
+	 * sidebar with a thin divider between groups. Group order defaults to the
+	 * order each label is first seen, or use the top-level `groupOrder`
+	 * config field to pin it explicitly. Ungrouped tabs always render first.
 	 */
 	group?: string;
+	/**
+	 * Health-check target. One of:
+	 *   - omitted          : no health check for this tab
+	 *   - `true`           : ping the tab's main `url`
+	 *   - a URL string     : ping that URL instead of `url` (useful when your
+	 *                        public iframe URL is behind auth but you want to
+	 *                        probe an internal `http://host:port` directly)
+	 *
+	 * Checks are performed server-side (via GET /api/ping?id=<tab.id>) so
+	 * they work across CORS, private networks, and HTTP/HTTPS boundaries.
+	 */
+	ping?: boolean | string;
 }
 
 export interface AppConfig {
@@ -48,6 +60,12 @@ export interface AppConfig {
 	title: string;
 	/** Tab to open on first load. Defaults to the first tab. */
 	defaultTab?: string;
+	/**
+	 * Explicit group order. Any group listed here renders in this order;
+	 * groups not listed fall back to first-occurrence order after the listed
+	 * ones. Ungrouped tabs always come first regardless.
+	 */
+	groupOrder?: string[];
 	tabs: Tab[];
 }
 
@@ -108,6 +126,23 @@ function validate(raw: unknown): AppConfig {
 				`config.json: tabs[${i}].group must be a string when present`,
 			);
 		}
+		// ping: boolean | URL string. Reject anything else up front so typos
+		// don't silently disable health checks.
+		if (tab.ping !== undefined) {
+			if (typeof tab.ping === "string") {
+				try {
+					new URL(tab.ping);
+				} catch {
+					throw new Error(
+						`config.json: tabs[${i}].ping "${tab.ping}" is not a valid URL`,
+					);
+				}
+			} else if (typeof tab.ping !== "boolean") {
+				throw new Error(
+					`config.json: tabs[${i}].ping must be a boolean or URL string`,
+				);
+			}
+		}
 		const id = tab.id as string;
 		if (!/^[A-Za-z0-9_-]+$/.test(id)) {
 			throw new Error(
@@ -130,6 +165,10 @@ function validate(raw: unknown): AppConfig {
 				typeof tab.group === "string" && tab.group.length
 					? tab.group
 					: undefined,
+			ping:
+				typeof tab.ping === "boolean" || typeof tab.ping === "string"
+					? (tab.ping as boolean | string)
+					: undefined,
 		};
 	});
 	if (tabs.length === 0) {
@@ -142,9 +181,24 @@ function validate(raw: unknown): AppConfig {
 			`config.json: defaultTab "${defaultTab}" does not match any tab id`,
 		);
 	}
+	let groupOrder: string[] | undefined;
+	if (c.groupOrder !== undefined) {
+		if (!Array.isArray(c.groupOrder)) {
+			throw new Error("config.json: groupOrder must be an array of strings");
+		}
+		groupOrder = c.groupOrder.map((g, i) => {
+			if (typeof g !== "string" || !g.length) {
+				throw new Error(
+					`config.json: groupOrder[${i}] must be a non-empty string`,
+				);
+			}
+			return g;
+		});
+	}
 	return {
 		title: typeof c.title === "string" && c.title ? c.title : "hello",
 		defaultTab,
+		groupOrder,
 		tabs,
 	};
 }
@@ -152,52 +206,103 @@ function validate(raw: unknown): AppConfig {
 /**
  * Bucket tabs into ordered groups for rendering.
  *
- * - Ungrouped tabs are collected into a single leading bucket (label `null`).
- * - Grouped tabs are collected per group label, in the order the label is
- *   first encountered in the config.
- * - Within each bucket, tab order matches the config.
- *
- * This keeps sidebar behavior predictable: editing the config top-to-bottom
- * reads left-to-right in the UI.
+ * Ordering rules:
+ *   1. Ungrouped tabs (no `group` field) always render first as a single
+ *      anonymous bucket at the top of the sidebar.
+ *   2. Groups named in `groupOrder` render next, in the order listed. Groups
+ *      listed but with no tabs are silently dropped.
+ *   3. Remaining groups (present in tabs, missing from `groupOrder`) render
+ *      last in first-occurrence order — the historical default.
+ *   4. Within each bucket, tab order matches config order.
  */
-export function groupTabs(tabs: Tab[]): Array<{ label: string | null; tabs: Tab[] }> {
+export function groupTabs(
+	tabs: Tab[],
+	groupOrder?: readonly string[],
+): Array<{ label: string | null; tabs: Tab[] }> {
 	const buckets = new Map<string | null, Tab[]>();
-	const order: Array<string | null> = [];
+	const firstSeen: Array<string | null> = [];
 	for (const tab of tabs) {
 		const key = tab.group ?? null;
 		if (!buckets.has(key)) {
 			buckets.set(key, []);
-			order.push(key);
+			firstSeen.push(key);
 		}
 		buckets.get(key)!.push(tab);
 	}
-	// Surface ungrouped tabs first regardless of where they appeared, so the
-	// top of the sidebar is always the "quick access" lane.
-	order.sort((a, b) => {
-		if (a === null && b !== null) return -1;
-		if (b === null && a !== null) return 1;
-		return 0;
-	});
-	return order.map((label) => ({ label, tabs: buckets.get(label)! }));
+
+	const out: Array<{ label: string | null; tabs: Tab[] }> = [];
+	const used = new Set<string | null>();
+
+	// 1. Ungrouped first.
+	if (buckets.has(null)) {
+		out.push({ label: null, tabs: buckets.get(null)! });
+		used.add(null);
+	}
+
+	// 2. Explicit order.
+	if (groupOrder) {
+		for (const label of groupOrder) {
+			if (!used.has(label) && buckets.has(label)) {
+				out.push({ label, tabs: buckets.get(label)! });
+				used.add(label);
+			}
+		}
+	}
+
+	// 3. Anything left, in first-occurrence order.
+	for (const label of firstSeen) {
+		if (!used.has(label)) {
+			out.push({ label, tabs: buckets.get(label)! });
+			used.add(label);
+		}
+	}
+
+	return out;
 }
 
 /**
- * Read and validate the config on every call. Cheap enough for this use case
- * and means edits to the mounted config.json take effect on page refresh with
- * no restart.
+ * In-memory cache for the parsed config, keyed by mtime.
+ *
+ * Before this, loadConfig() read + JSON.parse'd the file on every request.
+ * That's fine at homelab scale, but caching against the file's mtime gives
+ * us a true zero-I/O hit on steady state while still picking up host edits
+ * within one stat() call — no live-reload coordination required.
+ */
+interface Cached {
+	mtimeMs: number;
+	config: AppConfig;
+}
+let cache: Cached | undefined;
+
+/**
+ * Read and validate the config, honoring a single-entry mtime cache so
+ * repeat requests don't touch the filesystem beyond a stat().
+ *
+ * Edits to the mounted config.json take effect immediately on the next
+ * request — the stat() mtime changes on any write.
  */
 export async function loadConfig(): Promise<AppConfig> {
 	try {
+		const st = await stat(CONFIG_PATH);
+		if (cache && cache.mtimeMs === st.mtimeMs) {
+			return cache.config;
+		}
 		const txt = await readFile(CONFIG_PATH, "utf8");
-		return validate(JSON.parse(txt));
+		const config = validate(JSON.parse(txt));
+		cache = { mtimeMs: st.mtimeMs, config };
+		return config;
 	} catch (err: unknown) {
 		const e = err as NodeJS.ErrnoException;
 		if (e && e.code === "ENOENT") {
-			console.warn(
-				`[hello] no config at ${CONFIG_PATH}; using fallback example config`,
-			);
+			if (!cache) {
+				console.warn(
+					`[hello] no config at ${CONFIG_PATH}; using fallback example config`,
+				);
+			}
 			return FALLBACK;
 		}
+		// Invalidate the cache on any other error so the next request re-reads.
+		cache = undefined;
 		throw err;
 	}
 }

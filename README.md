@@ -24,6 +24,11 @@ image.
   others; a small spinner on the button shows load progress.
 - **Installable PWA** — your browser's install prompt will offer a standalone
   window and app icon.
+- **Command palette** — press `/` or Ctrl/Cmd+K to fuzzy-search tabs (fzf
+  matcher; Enter to switch, Ctrl+Enter / middle-click to open in a new window).
+- **Per-tab health dots** — optional server-side probe; red pulsing dot when a
+  service is unreachable, green when up, with latency recorded.
+- **Explicit `groupOrder`** in config, or first-occurrence fallback.
 - **Catppuccin Mocha** theme out of the box.
 - **JSON Schema** for `config.json` — editor autocomplete and validation.
 - [selfh.st/icons](https://selfh.st/icons) integration with a `sh-` prefix that
@@ -133,8 +138,10 @@ label first appears in the config, with a thin divider between groups.
 | `tabs[].icon`| string     | yes      | See [Icons](#icons) below.                       |
 | `tabs[].preload` | boolean | no      | If true, iframe is created at boot (hidden) so it's warm on first click. |
 | `tabs[].group`   | string  | no      | Group label. Tabs sharing a group render together, with a divider between groups. |
+| `tabs[].ping`    | boolean \| string | no | Health check. `true` probes the tab's `url`; a URL string probes that URL instead (useful when the public URL is behind auth and you'd rather probe `http://host:port` directly). |
 | `tabs[].sandbox` | string  | no      | iframe `sandbox` attribute (space-separated tokens). |
 | `tabs[].allow`   | string  | no      | iframe `allow` attribute.                        |
+| `groupOrder`     | string[] | no     | Explicit group order. Groups listed here render in this order; groups not listed fall back to first-occurrence order after them. Ungrouped tabs always come first. |
 
 Invalid config throws on page load — the error shows the bad field. Missing
 config falls back to a one-tab example so the container doesn't hard-fail.
@@ -199,8 +206,34 @@ mirror of [`selfhst/icons`](https://github.com/selfhst/icons) pinned to `@main`.
 | Click a sidebar icon     | Switch to that tab                                  |
 | Middle-click             | Open the tab's URL in a real new browser tab        |
 | Ctrl/Cmd + click         | Open the tab's URL in a real new browser tab        |
+| `/` or Ctrl/Cmd + K      | Open the command palette (fuzzy search tabs)        |
+| `↑` / `↓` / Tab (in palette) | Move selection                                  |
+| Enter (in palette)       | Switch to highlighted tab                           |
+| Ctrl+Enter (in palette)  | Open highlighted tab in a new browser tab           |
+| Esc (in palette)         | Close                                               |
 | Floating reload button   | Reload the currently visible tab's iframe           |
 | `#<id>` in URL           | Deep-link to a specific tab                         |
+
+## Health checks
+
+Set `"ping": true` on any tab and its sidebar icon gets a small colored dot:
+green when reachable, red (pulsing) when down, grey while the first check is
+in flight.
+
+The probe is performed **server-side** (hello's Node process opens a short
+HEAD/GET request to the target with a 3s timeout). This is necessary because
+browser-side health checks can't reach private LAN services, can't bypass
+CORS, and can't mix HTTP targets with an HTTPS page. Self-signed certs on LAN
+services are accepted.
+
+Use `"ping": "http://host:port"` to probe a *different* URL than the one
+loaded in the iframe — handy when your public URL is behind authentication
+but you'd rather probe the internal service directly. The server only ever
+probes URLs that come from your loaded config, never from client-supplied
+params (no SSRF risk).
+
+Checks run every 30s per tab with small jitter, pause while the browser tab
+is in the background, and resume when it comes back.
 
 ## How tab switching works
 

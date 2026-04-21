@@ -29,7 +29,11 @@ const liveReload = liveReloadEnabled();
 	</head>
 	<body>
 		<div class="app">
-			<Sidebar tabs={config.tabs} defaultTabId={defaultTabId} />
+			<Sidebar
+				tabs={config.tabs}
+				defaultTabId={defaultTabId}
+				groupOrder={config.groupOrder}
+			/>
 			<Stage tabs={config.tabs} defaultTabId={defaultTabId} />
 		</div>
 		<button

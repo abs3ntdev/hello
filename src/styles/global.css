@@ -189,6 +189,47 @@ body {
 	opacity: 0.75;
 }
 
+/* Health indicator dot — bottom-right corner of the tab button.
+   Drawn on the button itself with a second pseudo-element, overriding the
+   ::after loaded dot only when a health state is known. */
+.tab-button[data-health]::after {
+	content: "";
+	position: absolute;
+	right: 6px;
+	bottom: 6px;
+	top: auto;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	opacity: 1;
+}
+.tab-button[data-health="checking"]::after {
+	background: var(--ctp-overlay0);
+}
+.tab-button[data-health="unknown"]::after {
+	background: var(--ctp-overlay0);
+	opacity: 0.5;
+}
+.tab-button[data-health="up"]::after {
+	background: var(--ctp-green);
+}
+.tab-button[data-health="down"]::after {
+	background: var(--ctp-red);
+	animation: health-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes health-pulse {
+	0%,
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+	50% {
+		opacity: 0.5;
+		transform: scale(1.3);
+	}
+}
+
 /* Stage --------------------------------------------------------------- */
 
 .stage {
@@ -274,4 +315,145 @@ body {
 	to {
 		transform: rotate(360deg);
 	}
+}
+
+/* Command palette ---------------------------------------------------- */
+
+.palette[hidden] {
+	display: none;
+}
+
+.palette {
+	position: fixed;
+	inset: 0;
+	z-index: 20;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	padding: 10vh 16px 16px;
+}
+
+.palette-backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(17, 17, 27, 0.65);
+	backdrop-filter: blur(4px);
+}
+
+.palette-panel {
+	position: relative;
+	width: min(640px, 92vw);
+	max-height: 70vh;
+	background: var(--bg-elev);
+	border: 1px solid var(--divider);
+	border-radius: 12px;
+	box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.palette-input {
+	all: unset;
+	box-sizing: border-box;
+	width: 100%;
+	padding: 14px 18px;
+	font-size: 15px;
+	color: var(--fg);
+	border-bottom: 1px solid var(--divider);
+	background: transparent;
+}
+
+.palette-input::placeholder {
+	color: var(--fg-muted);
+}
+
+.palette-list {
+	list-style: none;
+	margin: 0;
+	padding: 4px;
+	overflow-y: auto;
+	flex: 1 1 auto;
+	scrollbar-width: thin;
+	scrollbar-color: var(--ctp-surface1) transparent;
+}
+
+.palette-item {
+	display: grid;
+	grid-template-columns: 28px 1fr auto;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 12px;
+	border-radius: 8px;
+	cursor: pointer;
+	color: var(--fg);
+	font-size: 14px;
+}
+
+.palette-item:hover,
+.palette-item.selected {
+	background: var(--ctp-surface0);
+}
+
+.palette-item.selected {
+	outline: 1px solid var(--ctp-surface2);
+	outline-offset: -1px;
+}
+
+.palette-icon {
+	width: 22px;
+	height: 22px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	border-radius: 4px;
+	color: var(--fg-muted);
+}
+
+.palette-icon img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+.palette-icon .emoji {
+	font-size: 16px;
+	line-height: 1;
+}
+
+.palette-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.palette-group {
+	color: var(--fg-muted);
+	font-size: 12px;
+}
+
+.palette-item mark {
+	background: transparent;
+	color: var(--accent);
+	font-weight: 600;
+}
+
+.palette-hint {
+	display: flex;
+	gap: 14px;
+	padding: 8px 14px;
+	border-top: 1px solid var(--divider);
+	font-size: 11px;
+	color: var(--fg-muted);
+	flex-wrap: wrap;
+}
+
+.palette-hint kbd {
+	padding: 1px 5px;
+	border-radius: 4px;
+	background: var(--ctp-surface1);
+	color: var(--fg);
+	font-family: inherit;
+	font-size: 10px;
 }

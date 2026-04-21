@@ -3,6 +3,8 @@
 
 	"title": "hello",
 	"defaultTab": "sonarr",
+	"groupOrder": ["Media", "*arr", "Monitoring"],
+
 	"tabs": [
 		{
 			"id": "dash",
@@ -12,12 +14,22 @@
 		},
 
 		{
+			"id": "plex",
+			"name": "Plex",
+			"url": "http://plex.local:32400/web",
+			"icon": "selfhst:plex",
+			"ping": true,
+			"group": "Media"
+		},
+
+		{
 			"id": "sonarr",
 			"name": "Sonarr",
 			"url": "http://sonarr.local",
 			"icon": "sh-sonarr",
 			"preload": true,
-			"group": "Media"
+			"ping": true,
+			"group": "*arr"
 		},
 		{
 			"id": "radarr",
@@ -25,14 +37,8 @@
 			"url": "http://radarr.local",
 			"icon": "sh-radarr",
 			"preload": true,
-			"group": "Media"
-		},
-		{
-			"id": "plex",
-			"name": "Plex",
-			"url": "http://plex.local:32400/web",
-			"icon": "selfhst:plex",
-			"group": "Media"
+			"ping": "http://192.168.1.50:7878",
+			"group": "*arr"
 		},
 
 		{
@@ -40,13 +46,6 @@
 			"name": "Grafana",
 			"url": "http://grafana.local",
 			"icon": "selfhst:grafana/light",
-			"group": "Monitoring"
-		},
-		{
-			"id": "portainer",
-			"name": "Portainer",
-			"url": "http://portainer.local:9000",
-			"icon": "sh-portainer.png",
 			"group": "Monitoring"
 		}
 	]

@@ -36,6 +36,12 @@ export const configSchema = {
 			description:
 				"`id` of the tab to open on first load. Must match one of `tabs[].id`. Defaults to the first tab.",
 		},
+		groupOrder: {
+			type: "array",
+			items: { type: "string", minLength: 1 },
+			description:
+				"Explicit ordering for groups in the sidebar. Groups listed here render in this order after any ungrouped tabs; groups not listed fall back to first-occurrence order after the listed ones.",
+		},
 		tabs: {
 			type: "array",
 			minItems: 1,
@@ -94,7 +100,15 @@ export const configSchema = {
 					type: "string",
 					minLength: 1,
 					description:
-						"Group label. Tabs sharing a group render together in the sidebar with a thin divider between groups. Groups appear in the order their label is first seen in the config.",
+						"Group label. Tabs sharing a group render together in the sidebar with a thin divider between groups. Group order follows top-level `groupOrder` if set, otherwise first-occurrence order.",
+				},
+				ping: {
+					description:
+						"Health check for this tab. `true` pings the main `url`. A URL string pings that URL instead (useful when the public URL is behind auth or you want to probe a LAN `http://host:port` directly). Omit / `false` to disable.",
+					oneOf: [
+						{ type: "boolean" },
+						{ type: "string", format: "uri" },
+					],
 				},
 				sandbox: {
 					type: "string",

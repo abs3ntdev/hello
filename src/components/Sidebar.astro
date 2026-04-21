@@ -5,11 +5,12 @@ import { resolveIcon } from "../lib/icons";
 interface Props {
 	tabs: Tab[];
 	defaultTabId: string;
+	groupOrder?: string[];
 }
 
-const { tabs, defaultTabId } = Astro.props;
+const { tabs, defaultTabId, groupOrder } = Astro.props;
 
-const groups = groupTabs(tabs).map((g) => ({
+const groups = groupTabs(tabs, groupOrder).map((g) => ({
 	label: g.label,
 	tabs: g.tabs.map((tab) => ({ tab, icon: resolveIcon(tab.icon) })),
 }));
@@ -29,21 +30,24 @@ const groups = groupTabs(tabs).map((g) => ({
 					)}
 					{group.tabs.map(({ tab, icon }) => (
 						<li>
-							<button
-								type="button"
-								class:list={[
-									"tab-button",
-									{ active: tab.id === defaultTabId },
-								]}
-								role="tab"
-								aria-selected={tab.id === defaultTabId ? "true" : "false"}
-								data-tab-id={tab.id}
-								data-preload={tab.preload ? "1" : "0"}
-								data-url={tab.url}
-								title={
-									group.label ? `${tab.name} — ${group.label}` : tab.name
-								}
-							>
+					<button
+						type="button"
+						class:list={[
+							"tab-button",
+							{ active: tab.id === defaultTabId },
+						]}
+						role="tab"
+						aria-selected={tab.id === defaultTabId ? "true" : "false"}
+						data-tab-id={tab.id}
+						data-preload={tab.preload ? "1" : "0"}
+						data-url={tab.url}
+						data-name={tab.name}
+						data-ping={tab.ping ? "1" : "0"}
+						data-group={group.label ?? ""}
+						title={
+							group.label ? `${tab.name} — ${group.label}` : tab.name
+						}
+					>
 								<span class="icon" aria-hidden="true">
 									{icon.kind === "image" ? (
 										<img src={icon.value} alt="" loading="lazy" />

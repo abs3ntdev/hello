@@ -100,10 +100,11 @@ function openInNewTab(meta: TabMeta): void {
  * Reload the currently visible tab's iframe. Shows a brief spinner on the
  * floating reload button while the iframe reports back `load`.
  *
- * Cross-origin iframes don't let us observe their internal loading state,
- * but the `load` event on the <iframe> element itself is same-origin-safe
- * and fires once the top-level document finishes. That's good enough for
- * feedback.
+ * We prefer `contentWindow.location.reload()` because reassigning `iframe.src`
+ * is a *navigation* to the same URL, not a true reload — it drops any fragment
+ * the iframe's own JS may have pushed (`#/dashboard`). Cross-origin iframes
+ * throw `SecurityError` on `contentWindow.location` access, so we fall back to
+ * `src = src` for those (which is what Organizr does).
  */
 function reloadCurrent(tabs: Map<string, TabMeta>, btn: HTMLElement): void {
 	if (!currentId) return;
@@ -111,15 +112,25 @@ function reloadCurrent(tabs: Map<string, TabMeta>, btn: HTMLElement): void {
 	if (!meta?.loaded) return;
 	const iframe = meta.container.querySelector<HTMLIFrameElement>("iframe");
 	if (!iframe) return;
+
 	btn.dataset.loading = "1";
 	const done = () => {
 		btn.dataset.loading = "0";
 		iframe.removeEventListener("load", done);
 	};
 	iframe.addEventListener("load", done, { once: true });
-	// Safety timeout in case load never fires (cross-origin edge cases).
+	// Safety timeout in case `load` never fires (cross-origin edge cases).
 	setTimeout(done, 8000);
-	iframe.src = iframe.src;
+
+	try {
+		// Preserves the iframe's current URL (including fragment).
+		iframe.contentWindow?.location.reload();
+	} catch {
+		// Cross-origin: can't touch .location. Fall back to src reassignment.
+		// Loses an in-iframe fragment but is the best we can do.
+		// biome-ignore lint/correctness/noSelfAssign: intentional iframe reload
+		iframe.src = iframe.src;
+	}
 }
 
 function wireButton(tabs: Map<string, TabMeta>, meta: TabMeta): void {
@@ -203,6 +214,12 @@ function init(): void {
 	if (document.documentElement.dataset.liveReload === "1") {
 		connectLiveReload();
 	}
+
+	// Load the extras (health polling + command palette) as dynamic imports
+	// so the main-thread blocking time stays small. Both depend only on the
+	// DOM we've already wired, so a delayed load is safe.
+	void import("./health").then((m) => m.startHealthPolling());
+	void import("./palette").then((m) => m.mountPalette());
 }
 
 /**

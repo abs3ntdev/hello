@@ -2,7 +2,7 @@ name: docker
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     tags: ["v*.*.*"]
   workflow_dispatch:
 
@@ -32,7 +32,7 @@ jobs:
 
       # Generates:
       #   ghcr.io/abs3ntdev/hello:latest        (on default branch)
-      #   ghcr.io/abs3ntdev/hello:main          (on main)
+      #   ghcr.io/abs3ntdev/hello:master        (on master)
       #   ghcr.io/abs3ntdev/hello:sha-abcd123   (every push)
       #   ghcr.io/abs3ntdev/hello:v1.2.3        (on tag push)
       #   ghcr.io/abs3ntdev/hello:1.2           (on tag push)

@@ -122,7 +122,7 @@ inline docs, and red squiggles on typos.
 **Option A — pin to the repo (recommended, doesn't require the app to be up):**
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/abs3ntdev/hello/main/schema/config.schema.json",
+  "$schema": "https://raw.githubusercontent.com/abs3ntdev/hello/master/schema/config.schema.json",
   "title": "hello",
   "tabs": [ ... ]
 }

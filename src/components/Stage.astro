@@ -1,0 +1,28 @@
+---
+import type { Tab } from "../lib/config";
+
+interface Props {
+	tabs: Tab[];
+	defaultTabId: string;
+}
+
+const { tabs, defaultTabId } = Astro.props;
+---
+
+<main class="stage" id="stage">
+	{
+		tabs.map((tab) => (
+			<div
+				class:list={[
+					"frame-container",
+					{ hidden: tab.id !== defaultTabId },
+				]}
+				data-tab-id={tab.id}
+				data-url={tab.url}
+				data-preload={tab.preload ? "1" : "0"}
+				data-sandbox={tab.sandbox ?? ""}
+				data-allow={tab.allow ?? ""}
+			/>
+		))
+	}
+</main>

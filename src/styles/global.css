@@ -1,0 +1,189 @@
+:root {
+	--sidebar-width: 56px;
+	--bg: #0f1115;
+	--bg-elev: #171a21;
+	--fg: #e6e6e6;
+	--fg-muted: #9aa0a6;
+	--accent: #3b82f6;
+	--divider: #242833;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+	background: var(--bg);
+	color: var(--fg);
+	font-family:
+		ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+		"Helvetica Neue", Arial, sans-serif;
+	overflow: hidden;
+}
+
+.app {
+	display: grid;
+	grid-template-columns: var(--sidebar-width) 1fr;
+	height: 100vh;
+	width: 100vw;
+}
+
+/* Sidebar ------------------------------------------------------------- */
+
+.sidebar {
+	background: var(--bg-elev);
+	border-right: 1px solid var(--divider);
+	display: flex;
+	flex-direction: column;
+	overflow-y: auto;
+	overflow-x: hidden;
+	scrollbar-width: thin;
+}
+
+.sidebar .brand {
+	writing-mode: vertical-rl;
+	transform: rotate(180deg);
+	color: var(--fg-muted);
+	font-size: 11px;
+	letter-spacing: 2px;
+	text-transform: uppercase;
+	padding: 14px 0 8px;
+	text-align: center;
+	user-select: none;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-height: 140px;
+	white-space: nowrap;
+}
+
+.sidebar .tabs {
+	list-style: none;
+	padding: 8px 0;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.tab-button {
+	all: unset;
+	cursor: pointer;
+	width: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 8px 0;
+	position: relative;
+	color: var(--fg-muted);
+	transition: color 120ms ease, background 120ms ease;
+}
+
+.tab-button:hover {
+	background: rgba(255, 255, 255, 0.04);
+	color: var(--fg);
+}
+
+.tab-button:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: -2px;
+}
+
+.tab-button.active {
+	color: var(--fg);
+}
+
+.tab-button.active::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 6px;
+	bottom: 6px;
+	width: 3px;
+	border-radius: 0 2px 2px 0;
+	background: var(--accent);
+}
+
+.tab-button .icon {
+	width: 32px;
+	height: 32px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 6px;
+	overflow: hidden;
+	background: transparent;
+}
+
+.tab-button .icon img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	display: block;
+}
+
+.tab-button .icon .emoji {
+	font-size: 22px;
+	line-height: 1;
+}
+
+/* Hide the label visually but keep it for accessibility. The button's
+   title attribute already provides a tooltip on hover. */
+.tab-button .label {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* Loaded indicator dot — appears for tabs whose iframe has been built
+   (either preloaded or previously visited). Organizr has a similar cue. */
+.tab-button[data-loaded="1"]::after {
+	content: "";
+	position: absolute;
+	right: 6px;
+	top: 6px;
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	background: var(--accent);
+	opacity: 0.8;
+}
+
+/* Stage --------------------------------------------------------------- */
+
+.stage {
+	position: relative;
+	width: 100%;
+	height: 100vh;
+	overflow: hidden;
+	background: #000;
+}
+
+.frame-container {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+}
+
+.frame-container.hidden {
+	display: none;
+}
+
+.frame-container .iframe,
+.frame-container iframe {
+	width: 100%;
+	height: 100%;
+	border: 0;
+	display: block;
+	background: #000;
+}

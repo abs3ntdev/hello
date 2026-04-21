@@ -1,0 +1,44 @@
+{
+	"title": "hello",
+	"defaultTab": "sonarr",
+	"tabs": [
+		{
+			"id": "sonarr",
+			"name": "Sonarr",
+			"url": "http://sonarr.local",
+			"icon": "sh-sonarr",
+			"preload": true
+		},
+		{
+			"id": "radarr",
+			"name": "Radarr",
+			"url": "http://radarr.local",
+			"icon": "sh-radarr",
+			"preload": true
+		},
+		{
+			"id": "plex",
+			"name": "Plex",
+			"url": "http://plex.local:32400/web",
+			"icon": "selfhst:plex"
+		},
+		{
+			"id": "grafana",
+			"name": "Grafana (light variant)",
+			"url": "http://grafana.local",
+			"icon": "selfhst:grafana/light"
+		},
+		{
+			"id": "portainer",
+			"name": "Portainer (png)",
+			"url": "http://portainer.local:9000",
+			"icon": "sh-portainer.png"
+		},
+		{
+			"id": "example",
+			"name": "Example (emoji)",
+			"url": "https://example.com",
+			"icon": "🌐"
+		}
+	]
+}

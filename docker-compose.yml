@@ -1,0 +1,15 @@
+services:
+  hello:
+    build: .
+    image: abs3ntdev/hello:latest
+    container_name: hello
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount your config.json here. Copy config/config.example.json as
+      # a starting point: cp config/config.example.json ./config/config.json
+      - ./config:/config:ro
+    environment:
+      - NODE_ENV=production
+      - HELLO_CONFIG=/config/config.json

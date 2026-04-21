@@ -1,0 +1,50 @@
+---
+import type { Tab } from "../lib/config";
+import { resolveIcon } from "../lib/icons";
+
+interface Props {
+	title: string;
+	tabs: Tab[];
+	defaultTabId: string;
+}
+
+const { title, tabs, defaultTabId } = Astro.props;
+
+const resolved = tabs.map((tab) => ({
+	tab,
+	icon: resolveIcon(tab.icon),
+}));
+---
+
+<nav class="sidebar" aria-label="Sites">
+	<div class="brand" title={title}>{title}</div>
+	<ul class="tabs" role="tablist">
+		{
+			resolved.map(({ tab, icon }) => (
+				<li>
+					<button
+						type="button"
+						class:list={[
+							"tab-button",
+							{ active: tab.id === defaultTabId },
+						]}
+						role="tab"
+						aria-selected={tab.id === defaultTabId ? "true" : "false"}
+						data-tab-id={tab.id}
+						data-preload={tab.preload ? "1" : "0"}
+						title={tab.name}
+					>
+						<span class="icon" aria-hidden="true">
+							{icon.kind === "image" ? (
+								<img src={icon.value} alt="" loading="lazy" />
+							) : (
+								<span class="emoji">{icon.value}</span>
+							)}
+						</span>
+						<span class="label">{tab.name}</span>
+					</button>
+				</li>
+			))
+		}
+	</ul>
+</nav>

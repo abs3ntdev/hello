@@ -1,0 +1,31 @@
+---
+import Sidebar from "../components/Sidebar.astro";
+import Stage from "../components/Stage.astro";
+import { loadConfig } from "../lib/config";
+import "../styles/global.css";
+
+const config = await loadConfig();
+const defaultTabId = config.defaultTab ?? config.tabs[0].id;
+---
+
+<!doctype html>
+<html lang="en" data-brand={config.title}>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="referrer" content="no-referrer" />
+		<title>{config.title}</title>
+		<link rel="icon" href="/favicon.svg" />
+	</head>
+	<body>
+		<div class="app">
+			<Sidebar
+				title={config.title}
+				tabs={config.tabs}
+				defaultTabId={defaultTabId}
+			/>
+			<Stage tabs={config.tabs} defaultTabId={defaultTabId} />
+		</div>
+		<script src="../scripts/tabs.ts"></script>
+	</body>
+</html>

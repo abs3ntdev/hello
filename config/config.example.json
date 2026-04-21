@@ -3,42 +3,49 @@
 	"defaultTab": "sonarr",
 	"tabs": [
 		{
+			"id": "dash",
+			"name": "Dashboard",
+			"url": "https://example.com",
+			"icon": "🏠"
+		},
+
+		{
 			"id": "sonarr",
 			"name": "Sonarr",
 			"url": "http://sonarr.local",
 			"icon": "sh-sonarr",
-			"preload": true
+			"preload": true,
+			"group": "Media"
 		},
 		{
 			"id": "radarr",
 			"name": "Radarr",
 			"url": "http://radarr.local",
 			"icon": "sh-radarr",
-			"preload": true
+			"preload": true,
+			"group": "Media"
 		},
 		{
 			"id": "plex",
 			"name": "Plex",
 			"url": "http://plex.local:32400/web",
-			"icon": "selfhst:plex"
+			"icon": "selfhst:plex",
+			"group": "Media"
 		},
+
 		{
 			"id": "grafana",
-			"name": "Grafana (light variant)",
+			"name": "Grafana",
 			"url": "http://grafana.local",
-			"icon": "selfhst:grafana/light"
+			"icon": "selfhst:grafana/light",
+			"group": "Monitoring"
 		},
 		{
 			"id": "portainer",
-			"name": "Portainer (png)",
+			"name": "Portainer",
 			"url": "http://portainer.local:9000",
-			"icon": "sh-portainer.png"
-		},
-		{
-			"id": "example",
-			"name": "Example (emoji)",
-			"url": "https://example.com",
-			"icon": "🌐"
+			"icon": "sh-portainer.png",
+			"group": "Monitoring"
 		}
 	]
 }

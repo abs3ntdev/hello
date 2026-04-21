@@ -17,6 +17,14 @@ image.
   scroll position, running JS, open WebSockets, and playing video all survive.
 - Optional **preload**: iframes marked `preload: true` are built at boot while
   hidden, so the first time you click them they're already loaded.
+- **Groups**: organize tabs into labeled sections with thin dividers.
+- **Middle-click or Ctrl/Cmd-click** a sidebar icon to open that URL in a real
+  new browser tab (handy when a site blocks embedding).
+- **Floating reload button** reloads the current iframe without touching the
+  others; a small spinner on the button shows load progress.
+- **Installable PWA** — your browser's install prompt will offer a standalone
+  window and app icon.
+- **Catppuccin Mocha** theme out of the box.
 - [selfh.st/icons](https://selfh.st/icons) integration with a `sh-` prefix that
   mirrors homepage/dashy, plus an explicit `selfhst:` form with light/dark
   variant support.
@@ -48,33 +56,41 @@ restart needed.
   "defaultTab": "sonarr",
   "tabs": [
     {
+      "id": "dash",
+      "name": "Dashboard",
+      "url": "https://example.com",
+      "icon": "🏠"
+    },
+
+    {
       "id": "sonarr",
       "name": "Sonarr",
-      "url": "http://sonarr.local",
+      "url": "https://sonarr.example.com",
       "icon": "sh-sonarr",
-      "preload": true
+      "preload": true,
+      "group": "Media"
     },
     {
       "id": "plex",
       "name": "Plex",
-      "url": "http://plex.local:32400/web",
-      "icon": "selfhst:plex"
+      "url": "https://plex.example.com",
+      "icon": "selfhst:plex",
+      "group": "Media"
     },
+
     {
       "id": "grafana",
       "name": "Grafana",
-      "url": "http://grafana.local",
-      "icon": "selfhst:grafana/light"
-    },
-    {
-      "id": "example",
-      "name": "Example",
-      "url": "https://example.com",
-      "icon": "🌐"
+      "url": "https://grafana.example.com",
+      "icon": "selfhst:grafana/light",
+      "group": "Monitoring"
     }
   ]
 }
 ```
+
+Ungrouped tabs render at the top. Grouped tabs render in the order their group
+label first appears in the config, with a thin divider between groups.
 
 ### Fields
 
@@ -88,6 +104,7 @@ restart needed.
 | `tabs[].url` | string     | yes      | The URL to load in the iframe.                   |
 | `tabs[].icon`| string     | yes      | See [Icons](#icons) below.                       |
 | `tabs[].preload` | boolean | no      | If true, iframe is created at boot (hidden) so it's warm on first click. |
+| `tabs[].group`   | string  | no      | Group label. Tabs sharing a group render together, with a divider between groups. |
 | `tabs[].sandbox` | string  | no      | iframe `sandbox` attribute (space-separated tokens). |
 | `tabs[].allow`   | string  | no      | iframe `allow` attribute.                        |
 
@@ -115,6 +132,16 @@ Default format is **SVG** (what selfh.st recommends when available). Browse the
 catalog at <https://selfh.st/icons/>. Icons are served from the jsDelivr CDN
 mirror of [`selfhst/icons`](https://github.com/selfhst/icons) pinned to `@main`.
 
+## Mouse + keyboard
+
+| Input                    | Action                                              |
+| ------------------------ | --------------------------------------------------- |
+| Click a sidebar icon     | Switch to that tab                                  |
+| Middle-click             | Open the tab's URL in a real new browser tab        |
+| Ctrl/Cmd + click         | Open the tab's URL in a real new browser tab        |
+| Floating reload button   | Reload the currently visible tab's iframe           |
+| `#<id>` in URL           | Deep-link to a specific tab                         |
+
 ## How tab switching works
 
 The trick (lifted straight from Organizr's `switchTab`):
@@ -126,7 +153,7 @@ The trick (lifted straight from Organizr's `switchTab`):
 3. Switching tabs only toggles a `hidden` class on containers — iframes are
    never removed, so browsing state survives.
 
-That's it. See `src/scripts/tabs.ts` for the ~100 lines of TypeScript.
+That's it. See `src/scripts/tabs.ts` for the client-side logic.
 
 ## Development
 

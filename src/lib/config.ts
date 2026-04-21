@@ -34,6 +34,13 @@ export interface Tab {
 	sandbox?: string;
 	/** Optional iframe allow attribute. */
 	allow?: string;
+	/**
+	 * Optional group label. Tabs sharing a group render together in the
+	 * sidebar with a thin divider between groups. Groups appear in the order
+	 * they're first seen in the config. Ungrouped tabs appear before the
+	 * first group.
+	 */
+	group?: string;
 }
 
 export interface AppConfig {
@@ -80,12 +87,26 @@ function validate(raw: unknown): AppConfig {
 				);
 			}
 		}
+		// Validate URL shape so typos fail fast instead of producing a blank
+		// iframe with no console error.
+		try {
+			new URL(tab.url as string);
+		} catch {
+			throw new Error(
+				`config.json: tabs[${i}].url "${tab.url as string}" is not a valid URL`,
+			);
+		}
 		// Validate icon syntax now so typos fail fast on page refresh.
 		try {
 			resolveIcon(tab.icon as string);
 		} catch (e: unknown) {
 			const msg = e instanceof Error ? e.message : String(e);
 			throw new Error(`config.json: tabs[${i}].${msg}`);
+		}
+		if (tab.group !== undefined && typeof tab.group !== "string") {
+			throw new Error(
+				`config.json: tabs[${i}].group must be a string when present`,
+			);
 		}
 		const id = tab.id as string;
 		if (!/^[A-Za-z0-9_-]+$/.test(id)) {
@@ -105,6 +126,10 @@ function validate(raw: unknown): AppConfig {
 			preload: typeof tab.preload === "boolean" ? tab.preload : undefined,
 			sandbox: typeof tab.sandbox === "string" ? tab.sandbox : undefined,
 			allow: typeof tab.allow === "string" ? tab.allow : undefined,
+			group:
+				typeof tab.group === "string" && tab.group.length
+					? tab.group
+					: undefined,
 		};
 	});
 	if (tabs.length === 0) {
@@ -122,6 +147,38 @@ function validate(raw: unknown): AppConfig {
 		defaultTab,
 		tabs,
 	};
+}
+
+/**
+ * Bucket tabs into ordered groups for rendering.
+ *
+ * - Ungrouped tabs are collected into a single leading bucket (label `null`).
+ * - Grouped tabs are collected per group label, in the order the label is
+ *   first encountered in the config.
+ * - Within each bucket, tab order matches the config.
+ *
+ * This keeps sidebar behavior predictable: editing the config top-to-bottom
+ * reads left-to-right in the UI.
+ */
+export function groupTabs(tabs: Tab[]): Array<{ label: string | null; tabs: Tab[] }> {
+	const buckets = new Map<string | null, Tab[]>();
+	const order: Array<string | null> = [];
+	for (const tab of tabs) {
+		const key = tab.group ?? null;
+		if (!buckets.has(key)) {
+			buckets.set(key, []);
+			order.push(key);
+		}
+		buckets.get(key)!.push(tab);
+	}
+	// Surface ungrouped tabs first regardless of where they appeared, so the
+	// top of the sidebar is always the "quick access" lane.
+	order.sort((a, b) => {
+		if (a === null && b !== null) return -1;
+		if (b === null && a !== null) return 1;
+		return 0;
+	});
+	return order.map((label) => ({ label, tabs: buckets.get(label)! }));
 }
 
 /**

@@ -14,18 +14,33 @@ const defaultTabId = config.defaultTab ?? config.tabs[0].id;
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="referrer" content="no-referrer" />
+		<meta name="color-scheme" content="dark" />
+		<meta name="theme-color" content="#1e1e2e" />
 		<title>{config.title}</title>
 		<link rel="icon" href="/favicon.svg" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="apple-touch-icon" href="/favicon.svg" />
 	</head>
 	<body>
 		<div class="app">
-			<Sidebar
-				title={config.title}
-				tabs={config.tabs}
-				defaultTabId={defaultTabId}
-			/>
+			<Sidebar tabs={config.tabs} defaultTabId={defaultTabId} />
 			<Stage tabs={config.tabs} defaultTabId={defaultTabId} />
 		</div>
-		<script src="../scripts/tabs.ts"></script>
+		<button
+			type="button"
+			id="reload-btn"
+			class="reload-btn"
+			title="Reload current tab"
+			aria-label="Reload current tab"
+		>
+			<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<path d="M21 12a9 9 0 1 1-3.3-6.95" />
+				<polyline points="21 3 21 9 15 9" />
+			</svg>
+		</button>
+		<script>
+			// Astro hoists + bundles this import as a client-side asset.
+			import "../scripts/tabs.ts";
+		</script>
 	</body>
 </html>

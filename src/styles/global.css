@@ -1,11 +1,46 @@
+/*
+ * Theme: Catppuccin Mocha
+ * https://github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md
+ */
 :root {
 	--sidebar-width: 56px;
-	--bg: #0f1115;
-	--bg-elev: #171a21;
-	--fg: #e6e6e6;
-	--fg-muted: #9aa0a6;
-	--accent: #3b82f6;
-	--divider: #242833;
+
+	/* Catppuccin Mocha */
+	--ctp-base: #1e1e2e;
+	--ctp-mantle: #181825;
+	--ctp-crust: #11111b;
+	--ctp-surface0: #313244;
+	--ctp-surface1: #45475a;
+	--ctp-surface2: #585b70;
+	--ctp-overlay0: #6c7086;
+	--ctp-overlay1: #7f849c;
+	--ctp-overlay2: #9399b2;
+	--ctp-text: #cdd6f4;
+	--ctp-subtext1: #bac2de;
+	--ctp-subtext0: #a6adc8;
+	--ctp-rosewater: #f5e0dc;
+	--ctp-flamingo: #f2cdcd;
+	--ctp-pink: #f5c2e7;
+	--ctp-mauve: #cba6f7;
+	--ctp-red: #f38ba8;
+	--ctp-maroon: #eba0ac;
+	--ctp-peach: #fab387;
+	--ctp-yellow: #f9e2af;
+	--ctp-green: #a6e3a1;
+	--ctp-teal: #94e2d5;
+	--ctp-sky: #89dceb;
+	--ctp-sapphire: #74c7ec;
+	--ctp-blue: #89b4fa;
+	--ctp-lavender: #b4befe;
+
+	/* Semantic aliases used throughout the app */
+	--bg: var(--ctp-base);
+	--bg-elev: var(--ctp-mantle);
+	--bg-deep: var(--ctp-crust);
+	--fg: var(--ctp-text);
+	--fg-muted: var(--ctp-overlay1);
+	--accent: var(--ctp-mauve);
+	--divider: var(--ctp-surface0);
 }
 
 * {
@@ -42,31 +77,24 @@ body {
 	overflow-y: auto;
 	overflow-x: hidden;
 	scrollbar-width: thin;
-}
-
-.sidebar .brand {
-	writing-mode: vertical-rl;
-	transform: rotate(180deg);
-	color: var(--fg-muted);
-	font-size: 11px;
-	letter-spacing: 2px;
-	text-transform: uppercase;
-	padding: 14px 0 8px;
-	text-align: center;
-	user-select: none;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	max-height: 140px;
-	white-space: nowrap;
+	scrollbar-color: var(--ctp-surface1) transparent;
 }
 
 .sidebar .tabs {
 	list-style: none;
-	padding: 8px 0;
+	padding: 6px 0;
 	margin: 0;
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: 2px;
+}
+
+.sidebar .group-divider {
+	list-style: none;
+	height: 1px;
+	background: var(--divider);
+	margin: 6px 10px;
+	padding: 0;
 }
 
 .tab-button {
@@ -76,14 +104,16 @@ body {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	padding: 8px 0;
+	padding: 6px 0;
 	position: relative;
 	color: var(--fg-muted);
-	transition: color 120ms ease, background 120ms ease;
+	transition:
+		color 120ms ease,
+		background 120ms ease;
 }
 
 .tab-button:hover {
-	background: rgba(255, 255, 255, 0.04);
+	background: rgba(205, 214, 244, 0.05);
 	color: var(--fg);
 }
 
@@ -94,6 +124,7 @@ body {
 
 .tab-button.active {
 	color: var(--fg);
+	background: rgba(203, 166, 247, 0.08);
 }
 
 .tab-button.active::before {
@@ -108,12 +139,12 @@ body {
 }
 
 .tab-button .icon {
-	width: 32px;
-	height: 32px;
+	width: 34px;
+	height: 34px;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	border-radius: 6px;
+	border-radius: 8px;
 	overflow: hidden;
 	background: transparent;
 }
@@ -154,8 +185,8 @@ body {
 	width: 5px;
 	height: 5px;
 	border-radius: 50%;
-	background: var(--accent);
-	opacity: 0.8;
+	background: var(--ctp-green);
+	opacity: 0.75;
 }
 
 /* Stage --------------------------------------------------------------- */
@@ -165,7 +196,7 @@ body {
 	width: 100%;
 	height: 100vh;
 	overflow: hidden;
-	background: #000;
+	background: var(--bg-deep);
 }
 
 .frame-container {
@@ -185,5 +216,62 @@ body {
 	height: 100%;
 	border: 0;
 	display: block;
-	background: #000;
+	background: var(--bg-deep);
+}
+
+/* Floating reload button --------------------------------------------- */
+
+.reload-btn {
+	position: fixed;
+	right: 14px;
+	bottom: 14px;
+	z-index: 10;
+	width: 38px;
+	height: 38px;
+	border: 1px solid var(--divider);
+	border-radius: 999px;
+	background: var(--bg-elev);
+	color: var(--fg-muted);
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+	transition:
+		color 120ms ease,
+		background 120ms ease,
+		transform 120ms ease;
+}
+
+.reload-btn:hover {
+	color: var(--accent);
+	background: var(--ctp-surface0);
+}
+
+.reload-btn:active {
+	transform: scale(0.94);
+}
+
+.reload-btn:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+
+.reload-btn svg {
+	width: 18px;
+	height: 18px;
+}
+
+/* Spin animation while an iframe is (re)loading */
+.reload-btn[data-loading="1"] svg {
+	animation: reload-spin 800ms linear infinite;
+}
+
+@keyframes reload-spin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
 }

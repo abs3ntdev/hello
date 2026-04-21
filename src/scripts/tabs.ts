@@ -8,6 +8,11 @@
  *   - Switching only toggles a `hidden` class on containers; iframes are never
  *     destroyed, so scroll position, running JS, WebSockets, and video state
  *     all survive tab switches.
+ *
+ * Click modifiers (match Organizr's mouse behavior):
+ *   - Plain click        : switch tab
+ *   - Middle click       : open tab URL in a new browser tab
+ *   - Ctrl / Cmd click   : open tab URL in a new browser tab
  */
 
 interface TabMeta {
@@ -62,6 +67,8 @@ function collectTabs(): Map<string, TabMeta> {
 	return map;
 }
 
+let currentId: string | undefined;
+
 function switchTab(tabs: Map<string, TabMeta>, id: string): void {
 	const meta = tabs.get(id);
 	if (!meta) return;
@@ -76,6 +83,7 @@ function switchTab(tabs: Map<string, TabMeta>, id: string): void {
 	meta.container.classList.remove("hidden");
 	meta.button.classList.add("active");
 	meta.button.setAttribute("aria-selected", "true");
+	currentId = meta.id;
 
 	document.title = `${meta.button.title} · ${document.documentElement.dataset.brand ?? "hello"}`;
 	const hash = `#${encodeURIComponent(id)}`;
@@ -84,14 +92,79 @@ function switchTab(tabs: Map<string, TabMeta>, id: string): void {
 	}
 }
 
+function openInNewTab(meta: TabMeta): void {
+	window.open(meta.url, "_blank", "noopener,noreferrer");
+}
+
+/**
+ * Reload the currently visible tab's iframe. Shows a brief spinner on the
+ * floating reload button while the iframe reports back `load`.
+ *
+ * Cross-origin iframes don't let us observe their internal loading state,
+ * but the `load` event on the <iframe> element itself is same-origin-safe
+ * and fires once the top-level document finishes. That's good enough for
+ * feedback.
+ */
+function reloadCurrent(tabs: Map<string, TabMeta>, btn: HTMLElement): void {
+	if (!currentId) return;
+	const meta = tabs.get(currentId);
+	if (!meta?.loaded) return;
+	const iframe = meta.container.querySelector<HTMLIFrameElement>("iframe");
+	if (!iframe) return;
+	btn.dataset.loading = "1";
+	const done = () => {
+		btn.dataset.loading = "0";
+		iframe.removeEventListener("load", done);
+	};
+	iframe.addEventListener("load", done, { once: true });
+	// Safety timeout in case load never fires (cross-origin edge cases).
+	setTimeout(done, 8000);
+	iframe.src = iframe.src;
+}
+
+function wireButton(tabs: Map<string, TabMeta>, meta: TabMeta): void {
+	const openNewTabModifier = (e: MouseEvent): boolean =>
+		e.ctrlKey || e.metaKey || e.button === 1;
+
+	meta.button.addEventListener("click", (e) => {
+		if (openNewTabModifier(e)) {
+			e.preventDefault();
+			openInNewTab(meta);
+			return;
+		}
+		switchTab(tabs, meta.id);
+	});
+
+	// Middle-click arrives as `auxclick` (button === 1). Some browsers also
+	// fire a regular `click` for it; the `openNewTabModifier` check above
+	// covers both paths so we don't open twice.
+	meta.button.addEventListener("auxclick", (e) => {
+		if (e.button !== 1) return;
+		e.preventDefault();
+		openInNewTab(meta);
+	});
+
+	// Prevent the default middle-click autoscroll cursor.
+	meta.button.addEventListener("mousedown", (e) => {
+		if (e.button === 1) e.preventDefault();
+	});
+}
+
+function mountReloadButton(
+	tabs: Map<string, TabMeta>,
+): HTMLButtonElement | undefined {
+	const btn = document.getElementById("reload-btn");
+	if (!(btn instanceof HTMLButtonElement)) return undefined;
+	btn.addEventListener("click", () => reloadCurrent(tabs, btn));
+	return btn;
+}
+
 function init(): void {
 	const tabs = collectTabs();
 	if (tabs.size === 0) return;
 
-	// Wire up sidebar buttons.
-	for (const meta of tabs.values()) {
-		meta.button.addEventListener("click", () => switchTab(tabs, meta.id));
-	}
+	for (const meta of tabs.values()) wireButton(tabs, meta);
+	mountReloadButton(tabs);
 
 	// Determine which tab is currently visible (server marked one container
 	// without .hidden) and mark it loaded so we don't double-create its iframe.
@@ -102,6 +175,7 @@ function init(): void {
 			ensureLoaded(meta);
 			meta.button.classList.add("active");
 			meta.button.setAttribute("aria-selected", "true");
+			currentId = meta.id;
 			break;
 		}
 	}

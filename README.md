@@ -51,6 +51,33 @@ container. Drop your `config.json` into that host path.
 read fresh on every request — edit it and refresh the page to see changes, no
 restart needed.
 
+### Live reload (optional)
+
+Set `HELLO_LIVE_RELOAD=1` and open tabs auto-refresh within a couple of
+seconds of any change to `config.json`. The server watches the file and pushes
+a tiny Server-Sent Events notification to connected browsers; each browser
+calls `location.reload()`.
+
+```yaml
+# docker-compose.yml
+environment:
+  - HELLO_LIVE_RELOAD=1
+```
+
+Caveats:
+- Reloading wipes cached iframe state (scroll, playing video, etc.). Fine for
+  a rare config edit; not what you want if you're iterating heavily.
+- The `/events` endpoint is not authenticated — put this behind your reverse
+  proxy's auth, same as the rest of the app. The endpoint leaks the file's
+  sha1 hash on each change and nothing else.
+- On filesystems that don't deliver inotify events (some network FS, quirky
+  docker volumes), set `HELLO_WATCH_POLLING=1` to fall back to polling.
+- Concurrent SSE clients are capped (default 256, override with
+  `HELLO_MAX_SSE_CLIENTS`); the endpoint returns 503 + `Retry-After` when
+  full.
+- If you use nginx in front, make sure `proxy_buffering` is off for `/events`
+  — Caddy is fine out of the box.
+
 ```json
 {
   "title": "hello",

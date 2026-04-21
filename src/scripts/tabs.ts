@@ -199,6 +199,42 @@ function init(): void {
 		const id = decodeURIComponent(location.hash.slice(1));
 		if (id && tabs.has(id)) switchTab(tabs, id);
 	});
+
+	if (document.documentElement.dataset.liveReload === "1") {
+		connectLiveReload();
+	}
+}
+
+/**
+ * Open a Server-Sent Events stream to /events and reload the page when the
+ * server reports a config change.
+ *
+ * Fair warning: reloading the page wipes all cached iframe state. That's a
+ * worthwhile trade for a rare config edit, not for frequent iteration.
+ *
+ * EventSource auto-reconnects on transient failures, so we don't need a
+ * reconnect loop. We DO bail if the server ever 404s the endpoint (meaning
+ * live-reload was turned off on the server without redeploying the page).
+ */
+function connectLiveReload(): void {
+	let source: EventSource | undefined;
+	try {
+		source = new EventSource("/events");
+	} catch {
+		return;
+	}
+	source.addEventListener("reload", () => {
+		// Preserve the current tab across the reload.
+		location.reload();
+	});
+	source.addEventListener("error", () => {
+		// EventSource's readyState === CLOSED means a non-retryable error
+		// (typically the endpoint returned 404/5xx). Let the browser give up
+		// rather than spinning the reconnect timer forever.
+		if (source && source.readyState === EventSource.CLOSED) {
+			source.close();
+		}
+	});
 }
 
 if (document.readyState === "loading") {
